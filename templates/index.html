@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Pitch Generator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #1a1a2e;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .container {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            padding: 3rem;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+
+        button {
+            margin-top: 1.25rem;
+            width: 100%;
+            padding: 0.9rem;
+            background: #6366f1;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover { background: #4f46e5; }
+
+        button:disabled {
+            background: #a5b4fc;
+            cursor: not-allowed;
+        }
+
+        .result {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f0fdf4;
+            border-left: 4px solid #22c55e;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            display: none;
+        }
+
+        .error {
+            background: #fef2f2;
+            border-left-color: #ef4444;
+            color: #991b1b;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            vertical-align: middle;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Pitch Generator</h1>
+        <p class="subtitle">Turn your business pain points into compelling automation pitches.</p>
+
+        <label for="pain-point">What is your biggest business pain point?</label>
+        <textarea id="pain-point" placeholder="e.g. I spend 10 hours a week chasing up invoices and quotes..."></textarea>
+
+        <button id="generate-btn" onclick="generatePitch()">Generate Pitch</button>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        async function generatePitch() {
+            const painPoint = document.getElementById("pain-point").value.trim();
+            const btn = document.getElementById("generate-btn");
+            const result = document.getElementById("result");
+
+            if (!painPoint) {
+                result.style.display = "block";
+                result.className = "result error";
+                result.textContent = "Please describe your pain point first.";
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Generating...';
+            result.style.display = "none";
+
+            try {
+                const response = await fetch("/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ pain_point: painPoint }),
+                });
+                const data = await response.json();
+
+                result.style.display = "block";
+                if (response.ok) {
+                    result.className = "result";
+                    result.textContent = data.pitch;
+                } else {
+                    result.className = "result error";
+                    result.textContent = data.error || "Something went wrong.";
+                }
+            } catch {
+                result.style.display = "block";
+                result.className = "result error";
+                result.textContent = "Could not connect to the server.";
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Generate Pitch";
+            }
+        }
+    </script>
+</body>
+</html>

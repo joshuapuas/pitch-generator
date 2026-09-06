@@ -1,4 +1,6 @@
 import os
+import json
+from urllib import request as urlrequest
 
 import anthropic
 from flask import Flask, render_template, request, jsonify
@@ -51,6 +53,25 @@ def generate_response():
         (block.text for block in response.content if block.type == "text"), ""
     )
     return jsonify({"reply": reply})
+
+
+@app.route("/create-draft", methods=["POST"])
+def create_draft():
+    webhook_url = os.environ.get("N8N_WEBHOOK_URL")
+    data = request.get_json(silent=True) or {}
+    if not webhook_url:
+        return jsonify({"error": "Gmail drafts are not configured yet."}), 503
+    if not data.get("reply"):
+        return jsonify({"error": "Generate a reply first."}), 400
+    payload = json.dumps({
+        "subject": f"Lead reply - {data.get('business_name', 'New lead')}",
+        "reply": data["reply"],
+    }).encode()
+    try:
+        urlrequest.urlopen(urlrequest.Request(webhook_url, data=payload, headers={"Content-Type": "application/json"}), timeout=15)
+    except Exception:
+        return jsonify({"error": "Could not create the Gmail draft."}), 502
+    return jsonify({"message": "Gmail draft created."})
 
 
 if __name__ == "__main__":

@@ -151,6 +151,7 @@
 
         <div id="result" class="result"></div>
         <button id="copy-btn" class="copy-btn" onclick="copyReply()">Copy Reply</button>
+        <button id="draft-btn" class="copy-btn" onclick="createDraft()">Create Gmail Draft</button>
     </div>
 
     <script>
@@ -161,6 +162,7 @@
             const btn = document.getElementById("generate-btn");
             const result = document.getElementById("result");
             const copyBtn = document.getElementById("copy-btn");
+            const draftBtn = document.getElementById("draft-btn");
 
             if (!businessName || !trade || !enquiry) {
                 result.style.display = "block";
@@ -192,6 +194,7 @@
                     result.className = "result";
                     result.textContent = data.reply;
                     copyBtn.style.display = "block";
+                    draftBtn.style.display = "block";
                 } else {
                     result.className = "result error";
                     result.textContent = data.error || "Something went wrong.";
@@ -204,6 +207,15 @@
                 btn.disabled = false;
                 btn.textContent = "Draft Reply";
             }
+        }
+
+        async function createDraft() {
+            const button = document.getElementById("draft-btn");
+            button.disabled = true;
+            button.textContent = "Creating draft...";
+            const response = await fetch("/create-draft", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({business_name:document.getElementById("business-name").value, reply:document.getElementById("result").textContent})});
+            const data = await response.json();
+            button.textContent = response.ok ? "Draft created" : (data.error || "Could not create draft");
         }
 
         async function copyReply() {

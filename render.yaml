@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: trade-lead-reply-assistant
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    plan: free
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false

@@ -98,6 +98,20 @@
             display: none;
         }
 
+        .copy-btn {
+            display: none;
+            margin-top: 0.75rem;
+            width: 100%;
+            padding: 0.75rem;
+            background: #fff;
+            color: #4f46e5;
+            border: 2px solid #c7d2fe;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
         .error {
             background: #fef2f2;
             border-left-color: #ef4444;
@@ -136,6 +150,7 @@
         <button id="generate-btn" onclick="generateResponse()">Draft Reply</button>
 
         <div id="result" class="result"></div>
+        <button id="copy-btn" class="copy-btn" onclick="copyReply()">Copy Reply</button>
     </div>
 
     <script>
@@ -145,17 +160,20 @@
             const enquiry = document.getElementById("enquiry").value.trim();
             const btn = document.getElementById("generate-btn");
             const result = document.getElementById("result");
+            const copyBtn = document.getElementById("copy-btn");
 
             if (!businessName || !trade || !enquiry) {
                 result.style.display = "block";
                 result.className = "result error";
                 result.textContent = "Please complete all fields first.";
+                copyBtn.style.display = "none";
                 return;
             }
 
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span> Generating...';
             result.style.display = "none";
+            copyBtn.style.display = "none";
 
             try {
                 const response = await fetch("/generate-response", {
@@ -173,6 +191,7 @@
                 if (response.ok) {
                     result.className = "result";
                     result.textContent = data.reply;
+                    copyBtn.style.display = "block";
                 } else {
                     result.className = "result error";
                     result.textContent = data.error || "Something went wrong.";
@@ -185,6 +204,14 @@
                 btn.disabled = false;
                 btn.textContent = "Draft Reply";
             }
+        }
+
+        async function copyReply() {
+            const result = document.getElementById("result");
+            const copyBtn = document.getElementById("copy-btn");
+            await navigator.clipboard.writeText(result.textContent);
+            copyBtn.textContent = "Copied";
+            setTimeout(() => { copyBtn.textContent = "Copy Reply"; }, 1500);
         }
     </script>
 </body>

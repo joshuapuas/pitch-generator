@@ -64,7 +64,7 @@ def create_draft():
     if not data.get("reply"):
         return jsonify({"error": "Generate a reply first."}), 400
     payload = json.dumps({
-        "subject": f"Lead reply - {data.get('business_name', 'New lead')}",
+        "subject": "",
         "reply": data["reply"],
     }).encode()
     try:

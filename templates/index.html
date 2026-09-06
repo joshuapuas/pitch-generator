@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Pitch Generator</title>
+    <title>Trade Lead Reply Assistant</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -46,9 +46,8 @@
             font-size: 1rem;
         }
 
-        textarea {
+        input, textarea {
             width: 100%;
-            min-height: 120px;
             padding: 1rem;
             border: 2px solid #e2e8f0;
             border-radius: 10px;
@@ -58,7 +57,11 @@
             transition: border-color 0.2s;
         }
 
-        textarea:focus {
+        input { margin-bottom: 1.25rem; }
+
+        textarea { min-height: 140px; }
+
+        input:focus, textarea:focus {
             outline: none;
             border-color: #6366f1;
         }
@@ -118,27 +121,35 @@
 </head>
 <body>
     <div class="container">
-        <h1>AI Pitch Generator</h1>
-        <p class="subtitle">Turn your business pain points into compelling automation pitches.</p>
+        <h1>Trade Lead Reply Assistant</h1>
+        <p class="subtitle">Turn a customer enquiry into a clear reply, ready for the business owner to review and send.</p>
 
-        <label for="pain-point">What is your biggest business pain point?</label>
-        <textarea id="pain-point" placeholder="e.g. I spend 10 hours a week chasing up invoices and quotes..."></textarea>
+        <label for="business-name">Business name</label>
+        <input id="business-name" type="text" placeholder="e.g. Coastal Plumbing">
 
-        <button id="generate-btn" onclick="generatePitch()">Generate Pitch</button>
+        <label for="trade">Trade or service</label>
+        <input id="trade" type="text" placeholder="e.g. Residential plumbing and hot-water systems">
+
+        <label for="enquiry">Customer enquiry</label>
+        <textarea id="enquiry" placeholder="e.g. Hi, our hot water system has stopped working. Can someone come out this week? We are in Mandurah."></textarea>
+
+        <button id="generate-btn" onclick="generateResponse()">Draft Reply</button>
 
         <div id="result" class="result"></div>
     </div>
 
     <script>
-        async function generatePitch() {
-            const painPoint = document.getElementById("pain-point").value.trim();
+        async function generateResponse() {
+            const businessName = document.getElementById("business-name").value.trim();
+            const trade = document.getElementById("trade").value.trim();
+            const enquiry = document.getElementById("enquiry").value.trim();
             const btn = document.getElementById("generate-btn");
             const result = document.getElementById("result");
 
-            if (!painPoint) {
+            if (!businessName || !trade || !enquiry) {
                 result.style.display = "block";
                 result.className = "result error";
-                result.textContent = "Please describe your pain point first.";
+                result.textContent = "Please complete all fields first.";
                 return;
             }
 
@@ -147,17 +158,21 @@
             result.style.display = "none";
 
             try {
-                const response = await fetch("/generate", {
+                const response = await fetch("/generate-response", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ pain_point: painPoint }),
+                    body: JSON.stringify({
+                        business_name: businessName,
+                        trade,
+                        enquiry,
+                    }),
                 });
                 const data = await response.json();
 
                 result.style.display = "block";
                 if (response.ok) {
                     result.className = "result";
-                    result.textContent = data.pitch;
+                    result.textContent = data.reply;
                 } else {
                     result.className = "result error";
                     result.textContent = data.error || "Something went wrong.";
@@ -168,7 +183,7 @@
                 result.textContent = "Could not connect to the server.";
             } finally {
                 btn.disabled = false;
-                btn.textContent = "Generate Pitch";
+                btn.textContent = "Draft Reply";
             }
         }
     </script>

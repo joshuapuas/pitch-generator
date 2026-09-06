@@ -7,10 +7,11 @@ app = Flask(__name__)
 client = anthropic.Anthropic()
 
 SYSTEM_PROMPT = (
-    "You are an AI automation consultant selling to small trades "
-    "businesses in regional WA. Convert the pain point into a "
-    "compelling 3-sentence pitch a non-technical business owner "
-    "would immediately understand."
+    "You are a helpful lead-response assistant for small trades businesses "
+    "in Western Australia. Write a warm, professional reply to a prospective "
+    "customer. Use plain Australian English. Do not invent prices, availability, "
+    "licences, guarantees, or technical details. Ask one clear next-step question "
+    "when information is missing. Keep the reply under 180 words."
 )
 
 
@@ -19,23 +20,34 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/generate", methods=["POST"])
-def generate():
-    pain_point = request.json.get("pain_point", "").strip()
-    if not pain_point:
-        return jsonify({"error": "Please enter a pain point."}), 400
+@app.route("/generate-response", methods=["POST"])
+def generate_response():
+    data = request.get_json(silent=True) or {}
+    business_name = data.get("business_name", "").strip()
+    trade = data.get("trade", "").strip()
+    enquiry = data.get("enquiry", "").strip()
+
+    if not business_name or not trade or not enquiry:
+        return jsonify({"error": "Please complete the business name, trade, and customer enquiry."}), 400
+
+    prompt = (
+        f"Business name: {business_name}\n"
+        f"Trade or service: {trade}\n"
+        f"Customer enquiry:\n{enquiry}\n\n"
+        "Write the customer reply only."
+    )
 
     response = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=1024,
+        max_tokens=350,
         system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": pain_point}],
+        messages=[{"role": "user", "content": prompt}],
     )
 
-    pitch = next(
+    reply = next(
         (block.text for block in response.content if block.type == "text"), ""
     )
-    return jsonify({"pitch": pitch})
+    return jsonify({"reply": reply})
 
 
 if __name__ == "__main__":
